@@ -1,50 +1,26 @@
 ---
-title: 'NutriSense: Automated Hydroponics Dosing System'
-author: '**Kushagra Tiwari and Shengmin Liu** (website template by Ryan Tsang)'
-date: '*EEC172 WQ24*'
+title: 'EEC 172 Final Lab: AWS Integrated Crash Detection'
+author: 'Ernest Wang and Wahad Latif'
+date: '*EEC172 SQ24*'
 
-subtitle: '<blockquote><b>EEC172 Final Project Webpage Example</b><br/>
-Note to current students: this is an <i>example</i> webpage and
-may not fulfill all stated requirements of the current quarter''s 
-assignment.<br/>The website source is hosted 
-<a href="https://github.com/ucd-eec172/project-website-example">on github</a>.
+subtitle: '<blockquote><b>EEC172 Final Project</b><br/>
+The website source is hosted 
+<a href="https://github.com/Wahad10/EEC172FinalProjectWebsite">on github</a>.
 </blockquote>'
 
 toc-title: 'Table of Contents'
 abstract-title: '<h2>Description</h2>'
-abstract: 'Hydroponics is a technique where plants are grown in a nutrient-rich
-solution. This soil- free technique has been gaining traction recently
-due to its ability to optimize resource utilization. However, since
-plants are highly sensitive to changes in TDS, hydroponic setups require
-continuous TDS monitoring and adjustment. NutriSense, our device, allows
-hobbyists to achieve ideal hydroponics results on a small scale. It
-continuously monitors TDS and temperature, allowing the user to remotely
-read the status over AWS IoT cloud. The user can remotely enter upper
-and lower thresholds for TDS, and the device will automatically add
-nutrient solution or water to keep the TDS bounded by the thresholds.
-The device can also be configured to send notifications over SNS when
-the TDS value goes outside thresholds.
+abstract: 'We will be implementing a simple crash detection/alert device using in-built sensors and other interfacing technologies. We hope to primarily use the accelerometer onboard the LaunchPad microcontroller to gather the raw acceleration data for processing. We plan to use OLEDs to display crash reports, IR Receiver and TV Remote to get user input to confirm/deny email notification, AWS transactions to send emails of crash reports, and etc.. Our end goal is to interface local crash detection to a wider ecosystem of notifications.
 <br/><br/>
 Our source code can be found 
 <!-- replace this link -->
-<a href="https://github.com/ucd-eec172/project-website-example">
-  here (placeholder)</a>.
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-evenly;padding-top:20px">
-  <div style="display: inline-block; vertical-align: bottom;">
-    <img src="./media/Image_001.jpg" style="width:auto;height:2in"/>
-    <!-- <span class="caption"> </span> -->
-  </div>
-  <div style="display: inline-block; vertical-align: bottom;">
-    <img src="./media/Image_002.jpg" style="width:auto;height:2in" />
-    <!-- <span class="caption"> </span> -->
-  </div>
-</div>
+<a href="https://github.com/Wahad10/EEC172FinalProject">
+  here</a>.
 
 <h2>Video Demo</h2>
 <div style="text-align:center;margin:auto;max-width:560px">
   <div style="padding-bottom:56.25%;position:relative;height:0;">
-    <iframe style="left:0;top:0;width:100%;height:100%;position:absolute;" width="560" height="315" src="https://www.youtube.com/embed/wSRtnAEZhmc?si=3vQXNj4h0WkW-F-q" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe style="left:0;top:0;width:100%;height:100%;position:absolute;" width="560" height="315" src="https://www.youtube.com/watch?v=9T2GwJXAk10" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 </div>
 '
