@@ -55,7 +55,7 @@ Our source code can be found
 
 # Market Survey
 
-There are two types of similar product on the market. The first one is
+There are THREE types of similar product on the market. The first one is
 products from AeroGarden. Their products allow users to grow plants in
 nutrient solutions in a limited amount of usually 5 to 10. Compared with
 this product, our product provides an automated system for nutrient
