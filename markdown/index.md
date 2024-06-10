@@ -29,323 +29,111 @@ Our source code can be found
 <!-- EDIT METADATA ABOVE FOR CONTENTS TO APPEAR ABOVE THE TABLE OF CONTENTS -->
 <!-- ALL CONTENT THAT FOLLWOWS WILL APPEAR IN AND AFTER THE TABLE OF CONTENTS -->
 
-# Market Survey
-
-There are THREE types of similar product on the market. The first one is
-products from AeroGarden. Their products allow users to grow plants in
-nutrient solutions in a limited amount of usually 5 to 10. Compared with
-this product, our product provides an automated system for nutrient
-control that ensures the plant always has the correct amount of
-nutrients needed to avoid excess or insufficient nutrients. The other
-product is an expensive commercial system for horticulture aiming for a
-large scale of growth. Compared with this one, our product has the
-advantage of being cheap and small-scale which is more suitable for
-individual hobbyists to explore hydroponics.
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-evenly;">
-  <div style='display: inline-block; vertical-align: top;'>
-    <img src="./media/Image_003.jpg" style="width:auto;height:200"/>
-    <span class="caption">
-      <a href="https://aerogarden.com/gardens/harvest-family/Harvest-2.0.html">AeroGarden Harvest 2.0</a>
-      <ul style="text-align:left;">
-      <li>Inexpensive ($90)</li>
-      <li>Not Automated</li>
-      <li>Small Scale</li>
-      <li>No remote monitoring</li>
-    </ul>
-    </span>
-  </div>
-  <div style='display: inline-block; vertical-align: top;'>
-    <img src="./media/Image_004.jpg" style="width:auto;height:200" />
-    <span class="caption">
-      <a href="https://www.hydroexperts.com.au/Autogrow-MultiGrow-Controller-All-In-One-Controller-8-Growing-Zones">Autogrow Multigrow</a>
-      <ul style="text-align:left;">
-      <li>Expensive ($4500)</li>
-      <li>Fully Automated</li>
-      <li>Huge Scale</li>
-      <li>Cloud monitoring</li>
-    </ul>
-    </span>
-  </div>
-</div>
 
 # Design
+
+## Overview
+
+Two CC3200 boards will be used to implement an user-observer system. The user system will poll for a crash and send the information via AWS to the observer. The observer will process the data and send a response back. 
 
 ## System Architecture
 
 <div style="display:flex;flex-wrap:wrap;justify-content:space-evenly;">
-  <div style="display:inline-block;vertical-align:top;flex:1 0 400px;">
-    As shown in the system flowchart, we use one of the CC3200 boards for
-    the closed feedback loop for maintaining concentration in the
-    environment. The board will read values with I2C protocol through an ADC
-    which reads values from the thermistor and the TDS meter sensor. The
-    board will also periodically read user-defined thresholds from the AWS
-    cloud using RESTful APIs. When the sensory values read outside of the
-    user-defined thresholds, the board will activate the motor control
-    function to pump either water or nutrient solution to bring the
-    concentration back within the thresholds. Meanwhile, another CC3200
-    board is frequently reading from the AWS cloud to present the current
-    TDS reading and user-defined threshold to the user on an OLED through
-    SPI protocols. To adjust the thresholds, the user can either do it
-    remotely or locally by using a TV remote to type the number into the IR
-    receiver. The adjustments will be updated to the AWS and if the user
-    updates remotely, the local CC3200 board will update the values in the
-    next synchronization.
+  <div style='display: inline-block; vertical-align: top;'>
+    <img src="./media/architecture_board1.png" style="width:auto;height:200"/>
+    <span class="caption">Figure 1: System Architecture Board 1 - User</span>
   </div>
-  <div style="display:inline-block;vertical-align:top;flex:0 0 400px;">
-    <div class="fig">
-      <img src="./media/Image_005.jpg" style="width:90%;height:auto;" />
-      <span class="caption">System Flowchart</span>
-    </div>
+  <div style='display: inline-block; vertical-align: top;'>
+    <img src="./media/arch_board2.png" style="width:auto;height:200" />
+    <span class="caption">Figure 2: System Architecture Board 2 - Observer</span>
   </div>
 </div>
 
 ## Functional Specification
 
 <div style="display:flex;flex-wrap:wrap;justify-content:space-evenly;">
-  <div style="display:inline-block;vertical-align:top;flex:1 0 300px;">
-    Our system works based on the following state diagram. The device will
-    periodically monitor the temperature and the electrical conductivity
-    (EC) of the solution and convert the values into a TDS value using a
-    calibration curve. At the same time, the device will check for threshold
-    inputs, both over the AWS shadow and via manual input on the IR
-    receiver. It will compare the TDS with the lower and upper thresholds
-    set by the user. If the value is within the thresholds, it will stay in
-    the rest state. If the TDS is higher than the upper thresholds, it will
-    go to the water state and activate the water pump until the PPM is lower
-    than the upper thresholds and go back to the rest state. If the PPM is
-    lower than the lower thresholds, it will go to the nutrient state and
-    activate the nutrient pump until the PPM is higher than the lower
-    thresholds and go back to the rest state. In each state, the device will
-    periodically post the TDS.
+  <div style='display: inline-block; vertical-align: top;'>
+    <img src="./media/functional_spec_board_1.png" style="width:auto;height:200"/>
+    <span class="caption">Figure 3: Functional Specification Board 1 - User</span>
   </div>
-  <div style="display:inline-block;vertical-align:top;flex:0 0 500px">
-    <div class="fig">
-      <img src="./media/Image_006.jpg" style="width:90%;height:auto;" />
-      <span class="caption">State Diagram</span>
-    </div>
+  <div style='display: inline-block; vertical-align: top;'>
+    <img src="./media/functional_spec_board_2.png" style="width:auto;height:200" />
+    <span class="caption">Figure 4: Functional Specification Board 2 - Observer</span>
   </div>
 </div>
+
+## Description
+
+<ol>
+  <li>Board 1 starts in the crash detection state where it polls the accelerometer data and determines if there is a crash or not. Once the data from the accelerometer surpasses a user set threshold, the user board sends a post request to AWS and awaits for a decision from the observer. After receiving the decision, the board can acknowledge the decision and reset the system.
+
+  Board 1 will be connected to the accelerometer sensor on the board via an internal I2C line. This will allow the board to have access to acceleration data. The board will also be able to poll SW 3 using GPIO for user input for the acknowledge. In addition to hardware connections, the board will be connected to the internet using Ti's SimpleLink capabilities to enable communication with the AWS servers. </li>
+
+  <li>Board 2 starts in the crash detection state where it polls the AWS server for the message that a crash was detected. Once the crashed flag is found in the AWS IOT server, the program displays a corresponding on the OLED and asks for the user for input. The user will input a decision through IR communication between the board and a remote. Once a decision is made, the board posts the decision to AWS and returns to poll for a crash message.
+
+  Board 2 will primarily be connected to AWS via the SimpleLink protocol to read the state of the IOT server. Once the crash state is read, the Board uses timer interrupts on a GPIO pin to record the IR signal from the remote; the board also will update the OLED screen to ask the observer for a decision. The board then interprets the IR signal and sends an update to the server while changing the OLED screen to reflect the decision. </li>
+</ol>
+
 
 # Implementation
 
-### CC3200-LAUNCHXL Evaluation Board
+## Board 1
 
-All control and logic was handled by two CC3200 microcontroller units,
-one each for the Master and Slave device. On the master device, it was
-responsible for decoding IR inputs from the remote to allow the user to
-input thresholds to be sent over AWS. The board’s SPI functionality,
-using the TI SPI library, was used to interface with the OLED display.
-The MCU is WiFi enabled, allowing a remote connection between the two
-boards.
+<ol>
+  <li>**Crash Detection** 
+  
+  The board communicates with the on-board accelerometer via an internal I2C line on Pin 1 and 2. The board reads 3 values from 3 addresses on the I2C corresponding to the x,y,z acceleration data. The board then calculates the sum of the directional-magnitudes squared to get a representative value of the overall magnitude. This value is then compared against a preset value to determine whether or not a crash happened. </li>
 
-On the slave device, the microcontroller was responsible for the same
-functionalities as above, in addition to the TDS reading and control.
-This includes interfacing with the ADC over the I2C bus, reading 
-thresholds over HTTP from the AWS device shadow, writing the reported 
-TDS to the device shadow, and activating the two pumps using the 
-BJT control circuit.
+  <li>**Send Post** 
+  
+  The board posts the crashed message to AWS IOT using SimpleLink protocols. The function was written in lab 3 and was modified to be able to post any arbitrary string. The modifications use string concatenation to generate any message that the user wants.  </li>
 
-## Functional Blocks: Master
+  <li>**Wait for Decision** 
+  
+  The board gets the AWS IOT shadow every 800 ms using the get function written in lab 3. The input is then searched through to find whether or not the crash message was acknowledged or ignored. The program then automatically advances to the user acknowledge state. </li>
 
-### AWS IoT Core
+  <li>**User Acknowledge** 
+  
+  The board in the user acknowledge state polls the input on SW3. When the switch is pressed, the board acknowledges the result and resets the AWS shadow to the default state and returns to polling for a crash. </li>
+</ol>
 
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 200px'>
-    The AWS IoT core allows our devices to communicate with each other
-    asynchronously. The master device can update the desired thresholds, and
-    the slave device will read them and synchronize them to the reported
-    state. The slave device will also post the TDS and temperature readings
-    periodically.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:0 0 400px'>
-    <div class="fig">
-      <img src="./media/Image_007.jpg" style="width:auto;height:2.5in" />
-      <span class="caption">Device Shadow JSON</span>
-    </div>
-  </div>
+## Board 2
+
+<ol>
+  <li>**Crash Detection State** 
+  
+  The board gets the AWS IOT shadow every 800 ms using the get function written in lab 3. The input is then searched through to find whether or not the crash message was received. Once the message is found, the program then automatically advances to the user decision select state.  </li>
+
+  <li>**Decision Select State** 
+  
+  The board writes a crash image to the OLED and ask the user to either acknowledge the crash or ignore the crash. The board then begins to poll the IR sensor for IR signals from the remote. This code was written in lab 3 and remains largely the same. Our implementation requires only 3 buttons: 1 for acknowledge, 2 for ignore, 3 for send. Thus, the other cases are ignored.  </li>
+
+  <li>**Post Decision** 
+  
+  The board writes the decision to the AWS IOT shadow, using the same logic from the Sent Post State on board one, except the posted message contains the decision. The program is then returned to polling for another crashed message. </li>
+</ol>
+
+## IR Sensor Connection
+
+<div style="display:flex;flex-wrap:wrap;justify-content:space-evenly;">
+  <img src="./media/circuit.png" style="width:auto;height:200"/>
+  <span class="caption">Figure 5: Circuit Provided in Lab 3</span>
 </div>
 
-### OLED Display
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 400px'>
-    On both Master and Slave devices, the user can view the current TDS and
-    temperature of the plant solution on an OLED display. The user can also
-    use the display to view and edit the TDS thresholds. The CC3200 uses the
-    SPI bus to communicate with the display module.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:0 0 400px'>
-    <div class="fig">
-      <img src="./media/Image_008.jpg" style="width:auto;height:2in" />
-      <span class="caption">OLED Wiring Diagram</span>
-    </div>
-  </div>
-</div>
-
-### IR Receiver
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 400px'>
-    On both the Master and Slave devices, a user can input the TDS
-    thresholds using a TV remote. These TV remotes use the NEC code format
-    with a carrier frequency of 38KHz. The Vishay IR receiver is connected
-    to Pin 62 of the CC3200, which is configured as a GPIO input pin. Each
-    positive edge of the signal triggers an interrupt in the main program,
-    storing the pulse distances into a buffer, and allowing us to decode the
-    inputs (1-9, delete and enter). The IR receiver is connected to VCC
-    through a resistor and a capacitor to filter any ripples.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:0 0 400px'>
-    <div class="fig">
-      <img src="./media/Image_009.jpg" style="width:auto;height:2in" />
-      <span class="caption">IR Receiver Wiring Diagram</span>
-    </div>
-  </div>
-</div>
-
-## Functional Blocks: Slave
-
-The slave device contains all the functional blocks from the master
-device, plus the following:
-
-### Analog-To-Digital Converter (ADC) Board
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 400px'>
-    The outputs from the thermistor and TDS sensor board are
-    in the form of analog voltages, which need to be converted to digital
-    values to be usable in our program. We chose the AD1015 breakout board
-    from Adafruit, which sports 4-channels and 12 bits of precision. We
-    ended up using only 2 channels, so there is a potential for even more
-    cost savings. The ADC board supports I2C communication, which we can use
-    to request and read the two channel voltages. 
-    The <a href="https://cdn-shop.adafruit.com/datasheets/ads1015.pdf">
-    product datasheet</a> contains the necessary configuration values
-    and register addresses for operation.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:1 0 400px'>
-    <div class="fig">
-      <img src="./media/Image_010.jpg" style="width:auto;height:2in" />
-      <span class="caption">ADC Wiring Diagram</span>
-    </div>
-  </div>
-</div>
-
-### Thermistor
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 300px;'>
-    Conductivity-based TDS measurements are sensitive to temperature. To
-    allow accurate TDS measurements in a variety of climates and seasons,
-    temperature compensation calculations must be performed. To measure the
-    temperature, we use an NTC thermistor connected in a voltage divider
-    with a 10k resistor. The voltage across the resistor is read by the ADC
-    and converted to temperature using the equation provided by the
-    thermistor datasheet.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:1 0 400px'>
-    <div class="fig">
-      <img src="./media/Image_011.jpg" style="width:auto;height:2in" />
-      <span class="caption">Thermistor Circuit Diagram</span>
-    </div>
-  </div>
-</div>
-
-### TDS Sensor Board
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 500px'>
-    In our first attempt to measure TDS, we used a simple two-probe analog
-    setup with a voltage divider. We soon found out that this was a naïve
-    approach (see Challenges). Consequently, we acquired a specialty TDS
-    sensing board from CQRobot, which generates a sinusoidal pulse and
-    measures the voltage drop to give a highly precise voltage to the ADC.
-    The MCU can then convert this voltage to a TDS value using the equation
-    provided by the device datasheet. We calibrated the TDS readings using a
-    standalone TDS sensor pen. After calibration and setting up the curves
-    for temperature compensation, we were able to achieve TDS readings
-    accurate to within 5% of the TDS sensor pen.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:1 0 600px'>
-    <div class="fig">
-      <img src="./media/Image_012.jpg" style="width:auto;height:2in;padding-top:30px" />
-      <span class="caption">TDS Sensor Wiring Diagram</span>
-    </div>
-  </div>
-</div>
-
-### Pumps and Control Circuit
-
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">
-  <div style='display: inline-block; vertical-align: top;flex:1 0 500px'>
-    The CC3200 is unable to provide sufficient power to drive the pumps,
-    which need 100mA of current each. Therefore, we used an external power
-    source in the form of 2 AA batteries for each pump motor. To allow the
-    CC3200 to turn on/off the motors, we designed a simple amplifier using a
-    Common Emitter topology. When the control pin is asserted HIGH, the BJT
-    will allow current to flow from 3V to ground through the pump motor.
-    Conversely, if the control signal is LOW, the BJT will not allow current
-    to flow in the motor. For each motor, there is a reverse-biased diode
-    connected across it. This protects our circuit from current generated by
-    the motor if it is spun from external force or inertia.
-  </div>
-  <div style='display: inline-block; vertical-align: top;flex:1 0 600px'>
-    <div class="fig">
-      <img src="./media/Image_013.jpg" style="width:auto;height:2in;padding-top:30px" />
-      <span class="caption">Pump Circuit Diagrams</span>
-    </div>
-  </div>
-</div>
 
 # Challenges
 
-The most significant challenge we faced while developing this prototype
-was of inaccurate and inconsistent Electrical Conductivity (EC)
-measurements. This occurred due to two reasons: probe channel
-polarization and current limitations of GPIO pins.
+The primary challenge throughout the implementation of the crash detection protocol was ensuring the state transitions and state logic was robust and sound. There was a need to test each transition between states and ensure if there are unexpected outputs, the overall program would not derail. For board 1, it was ensuring that after the first crash detected, the board would stop polling for input as the decision is being processed or that inputs on the switch would not effect the state when the board is polling for the observer's response. For board 2, it was ensured that the crash detection state was not triggered by remote buttons, and that the remote buttons that were not used did not introduce bugs within the program. Overall, to ensure desired behavior, we chose to restrict some polling to the respective states that need said polling. This prevented unwanted input bugs and streamlined the logical flow of the code. Functions written in previous labs were used to implement the whole project, thus we were confident in the functionality of said functions. One major hurdle that needed to be overcome was the ability to write arbitrary messages to the AWS shadow. The message sent has to match that of the JSON format stored in the AWS cloud, thus we need a tailor-able system that allowed us to send the messages that we want. To send the messages, we leveraged string concatenation allowing us to keep the general format of a header block and tail block while inserting the message of interest in between. This allowed for the posting of arbitrary string messages. Another major hurdle is finding the message that we wanted within the get request. After some research, a simple function that found a sub string with in a string (strstr) was found and used in our implementation. Initially, it was planned to provide feedback to the user on the user's board via the LED's, but the internal I2C lines use pin 1 and 2, thus preventing the addressing of the LEDs. We weren't able to implement the feedback on the board, but there is a potential implementation where the LEDs are off the board and controlled through addressable GPIO pins. Overall, the challenges faced with implementing the crash detection protocol were mostly solved, except for some improvements that can be made in the future.
 
-## Probe Channel Polarization
-
-Our first design for the probe was simply two copper rods, which would
-add as electrodes. This probe would be connected in series with a
-1000-ohm resistor to act as a voltage divider. We would simply connect
-the probe to VCC and measure the voltage divider through the ADC,
-allowing us to calculate the EC. However, when we used the probe for a
-few minutes, we realized that the EC value would continue to rise. This
-is because the DC current causes an ionized channel to build up between
-the two electrodes in the water. This cause inconsistent EC readings as
-time goes on.
-
-## Current Limitation of GPIO Pins
-
-Our next idea was to try using the GPIO pins to power the probe, since
-we can turn it off when not needed, preventing excessive polarization.
-However, the GPIO pins are current limited, and any control circuit with
-a transistor would introduce extra voltage drops. Therefore, the simple
-two-probe implementation was not feasible.
-
-## Solution to Challenges
-
-We realized that using DC current to measure EC was not feasible.
-Therefore, we purchased a standalone EC measurement board from CQRobot.
-This inexpensive solution (\$8) used a low-voltage, low-current AC
-signal to prevent polarization. The board would convert the AC voltage
-drop across the solution to a DC analog voltage, which would then be
-read by our ADC. After calibrating the setup using a commercial TDS pen,
-the results were accurate within 3%, and would not drift by more than
-0.5% over time.
 
 # Future Work
 
-Given more time, we had the idea of developing a web app to allow users
-to control the device from their cell phone. Another idea we wanted to
-implement in the future is adding a grow light and pH controller to
-maintain a more suitable and stable environment for different plants to
-grow.
+The overall goal of this project is to lay frame work that mediates control between a user and an observer for crash detection. The logical next steps are the inclusion of other interactions that the board can support. As mentioned in the challenges section, there is no user feedback on the board itself. This can easily be remedied using other GPIO pins to toggle LEDs connected to the board via bread board(for prototype) or PCB for a "final" product. User usage can be further improved with the implementation of the OLED and messages for the user when they fall. The core algorithm can also be modified to change such that if there is a detected crash the user can self report if the crash was a false alarm or not, by passing the need for the observer to decide whether or not the crash should be acknowledged or ignored. More interconnected routines can be added such as manual crash notifications on the user side through the use of another button, allowing the user to call for help without the need of a crash. Local alarms could also be implemented with another CC3200 board that continuously polls the AWS shadow for the crashed image and trigger a local speaker to alert people with the device of a crash. Speakers can be added to the observer board to further draw attention when a crash is detected.  In generality, future additions to this project will center around the interfacing of the core crash detection to other services/routines. 
 
 
-# Finalized BOM
+# Finalized Bill of Materials (BOM)
+
+Note that all of these materials were provided in the lab.
 
 <!-- you can convert google sheet cells to html for free using a converter
   like https://tabletomarkdown.com/convert-spreadsheet-to-html/ -->
@@ -353,195 +141,114 @@ grow.
 <table style="border-collapse:collapse;">
 <thead>
   <tr>
-    <th><p>No.</p></th>
-    <th><p>PART NAME</p></th>
+    <th><p>NUMBER</p></th>
+    <th><p>QUANTITY</p></th>
+    <th><p>MATERIAL</p></th>
     <th><p>DESCRIPTION</p></th>
-    <th><p>Qty</p></th>
-    <th><p>SUPPLIER / MANUFACTURER</p></th>
-    <th><p>UNIT COST</p></th>
-    <th><p>TOTAL PART COST</p></th>
-    <th><p>Purpose</p></th>
+    <th><p>COST</p></th>
+    <th><p>WHERE TO OBTAIN</p></th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td><p>1</p></td>
-    <td><p>CC3200-LAUNCHXL</p></td>
-    <td><p>MCU Evaluation Board</p></td>
-    <td><p>2</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
+    <td><p>1</p></td>
+    <td><p>SimpleLink CC3200 LaunchPad (CC3200-LAUNCHXL)</p></td>
+    <td><p>LaunchPad Microcontoller, comes with an onboard Bosch BMA222 acceleration sensor connected via I2C interface</p></td>
     <td><p>$66.00</p></td>
-    <td><p>$132.00</p></td>
-    <td><p>Control Remote and Local Devices</p></td>
+    <td><p>ti.com</p></td>
   </tr>
   <tr>
     <td><p>2</p></td>
-    <td><p>Adafruit 1431 OLED</p></td>
-    <td><p>128x128 RGB OLED Display. SPI protocol</p></td>
-    <td><p>2</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
-    <td><p>$39.95</p></td>
-    <td><p>$79.90</p></td>
-    <td><p>Display PPM, Temperature, Thresholds, Inputs</p></td>
+    <td><p>1</p></td>
+    <td><p>Code Composer Studio (CSS) IDE</p></td>
+    <td><p>IDE used to code, debug, and build the programs for the micro-controller</p></td>
+    <td><p>Free</p></td>
+    <td><p>ti.com</p></td>
   </tr>
   <tr>
     <td><p>3</p></td>
-    <td><p>Adafruit 4547 3VDC Pump</p></td>
-    <td><p>Submersible pump. 3V 100mA DC</p></td>
-    <td><p>2</p></td>
-    <td><p>Adafruit</p></td>
-    <td><p>$2.95</p></td>
-    <td><p>$5.90</p></td>
-    <td><p>For dispensing water and nutrient solution</p></td>
+    <td><p>1</p></td>
+    <td><p>CC3200 Software Development Kit and SDK-ServicePack</p></td>
+    <td><p>Helper folders and files for the CSS IDE containing demo programs</p></td>
+    <td><p>Free</p></td>
+    <td><p>ti.com</p></td>
   </tr>
   <tr>
     <td><p>4</p></td>
-    <td><p>Adafruit 4545 6mm Tube</p></td>
-    <td><p>6mm Silicone Tube: 1 meter length</p></td>
     <td><p>1</p></td>
-    <td><p>Adafruit</p></td>
-    <td><p>$1.50</p></td>
-    <td><p>$1.50</p></td>
-    <td><p>For dispensing water and nutrient solution</p></td>
+    <td><p>TI SysConfig Tool</p></td>
+    <td><p>TI Pin Mux tool that helps configure GPIO and other pin configurations. The software outputs C files which can be added to CC3200 projects in the CSS IDE.</p></td>
+    <td><p>Free</p></td>
+    <td><p>ti.com</p></td>
   </tr>
   <tr>
     <td><p>5</p></td>
-    <td><p>NTC Thermistor 10k</p></td>
-    <td><p>10k ohm nominal resistance, 100cm lead</p></td>
     <td><p>1</p></td>
-    <td><p>(Already had one, available on Aliexpress)</p></td>
-    <td><p>$0.92</p></td>
-    <td><p>$0.92</p></td>
-    <td><p>For temperature compensation</p></td>
+    <td><p>CCS UniFlash</p></td>
+    <td><p>Flashing software that helps program the CC3200 projects onto the serial Flash chip onboard the LaunchPad to allow the micro-controller to run programs without downloading them from a running CSS IDE</p></td>
+    <td><p>Free</p></td>
+    <td><p>ti.com</p></td>
   </tr>
   <tr>
     <td><p>6</p></td>
-    <td><p>Adafruit AD1015 12-bit ADC</p></td>
-    <td><p>12-bit resolution, 4 channels, I2C</p></td>
     <td><p>1</p></td>
-    <td><p>Adafruit</p></td>
-    <td><p>$9.95</p></td>
-    <td><p>$9.95</p></td>
-    <td><p>To convert Thermistor and TDS sensor reading to digital</p></td>
+    <td><p>PuTTY</p></td>
+    <td><p>Windows terminal emulator which the LaunchPad connects to via COM4 port</p></td>
+    <td><p>Free</p></td>
+    <td><p>putty.org</p></td>
   </tr>
   <tr>
     <td><p>7</p></td>
-    <td><p>PN2222A Transistor</p></td>
-    <td><p>NPN BJT (40V, 1000mA)</p></td>
-    <td><p>2</p></td>
-    <td><p>Digikey (onSemi)</p></td>
-    <td><p>$0.40</p></td>
-    <td><p>$0.80</p></td>
-    <td><p>For digital motor control</p></td>
+    <td><p>1</p></td>
+    <td><p>Breadboard Kit with Connector Wires, include at least 1 Resistor and Capacitor</p></td>
+    <td><p>Simple breadboard with hardware components to help build a circuit to connect Launchpad to other sensors/devices</p></td>
+    <td><p>$20.00</p></td>
+    <td><p>amazon.com</p></td>
   </tr>
   <tr>
     <td><p>8</p></td>
-    <td><p>1N4001 Rectifier Diode</p></td>
-    <td><p>Diffused junction: 50V 1000mA</p></td>
-    <td><p>2</p></td>
-    <td><p>Digikey (Good-Ark Semi)</p></td>
-    <td><p>$0.16</p></td>
-    <td><p>$0.32</p></td>
-    <td><p>Reverse Current Protection</p></td>
+    <td><p>1</p></td>
+    <td><p>OLED (Organic Light Emitting Diode) Display</p></td>
+    <td><p>This is the Adafruit OLED Breakout Board Display - 16-bit Color 1.5" which is connected to the LaunchPad using a small breadboard via the SPI interface. It will show a message indicating crash report.</p></td>
+    <td><p>$40.00</p></td>
+    <td><p>amazon.com</p></td>
   </tr>
   <tr>
     <td><p>9</p></td>
-    <td><p>10k ohm resistor</p></td>
-    <td><p>10k ohm , 1% tolerance, 0.25W</p></td>
     <td><p>1</p></td>
-    <td><p>Digikey (Stackpole Electronics)</p></td>
-    <td><p>$0.10</p></td>
-    <td><p>$0.10</p></td>
-    <td><p>Voltage divider for Thermistor</p></td>
+    <td><p>AT&T S10-S3 Remote</p></td>
+    <td><p>This is the IR transmitter which is just a simple TV remote configured with a specific code to send specific waveforms to the receiver module. A datasheet is provided to help identify waveforms and translate to binary.</p></td>
+    <td><p>$40.00</p></td>
+    <td><p>amazon.com</p></td>
   </tr>
   <tr>
     <td><p>10</p></td>
-    <td><p>Vishay TSOP31130 IR RCVR</p></td>
-    <td><p>30kHz carrier frequency</p></td>
-    <td><p>2</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
-    <td><p>$1.41</p></td>
-    <td><p>$2.82</p></td>
-    <td><p>Decode user inputs</p></td>
+    <td><p>1</p></td>
+    <td><p>IR Receiver (Vishay TSOP311xx / 313xx / 315xx)</p></td>
+    <td><p>This is the IR receiver module which is wired up in a simple application circuit and conencted to a GPIO pin on the Launchpad. It receives signals from the remote and sends them to the Launchpad for decoding.</p></td>
+    <td><p>$7.00</p></td>
+    <td><p>amazon.com</p></td>
   </tr>
   <tr>
     <td><p>11</p></td>
-    <td><p>330 ohm resistor</p></td>
-    <td><p>330 ohm resistor, &lt;5% tolerance, 3W</p></td>
-    <td><p>2</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
-    <td><p>$0.59</p></td>
-    <td><p>$1.18</p></td>
-    <td><p>Current Limit for IR Receiv er</p></td>
-  </tr>
-  <tr>
-    <td><p>12</p></td>
-    <td><p>ATT-RC1534801 Remote</p></td>
-    <td><p>General-purpose TV remote. IR NTC protocol</p></td>
     <td><p>1</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
-    <td><p>$9.99</p></td>
-    <td><p>$9.99</p></td>
-    <td><p>Allow user inputs</p></td>
-  </tr>
-  <tr>
-    <td><p>13</p></td>
-    <td><p>CQRSENTDS01 TDS Sensor</p></td>
-    <td><p>Analog reading 0-2.3V. 0-1000ppm range</p></td>
-    <td><p>1</p></td>
-    <td><p>CQRobot</p></td>
-    <td><p>$7.99</p></td>
-    <td><p>$7.99</p></td>
-    <td><p>Measure TDS of plant solution</p></td>
-  </tr>
-  <tr>
-    <td><p>14</p></td>
-    <td><p>10uF Capacitor</p></td>
-    <td><p>Electrolytic Cap 100V</p></td>
-    <td><p>2</p></td>
-    <td><p>Provided by EEC172 Course</p></td>
-    <td><p>$0.18</p></td>
-    <td><p>$0.36</p></td>
-    <td><p>DC Filtering for IR Receiv er</p></td>
-  </tr>
-  <tr>
-    <td><p>15</p></td>
-    <td><p><u>AA Battery (4ct</u>)</p></td>
-    <td><p>1.5 Volt, Non-rechargable</p></td>
-    <td><p>1</p></td>
-    <td><p>Already had, but</p>
-      <p>available on Amazon</p></td>
-    <td><p>$3.65</p></td>
-    <td><p>$3.65</p></td>
-    <td><p>Provide Power to Motors</p></td>
-  </tr>
-  <tr>
-    <td><p>16</p></td>
-    <td><p>Battery Holder</p></td>
-    <td><p>2xAA (3 Volts Total)</p></td>
-    <td><p>2</p></td>
-    <td><p>Amazon</p></td>
-    <td><p>$2.50</p></td>
-    <td><p>$4.99</p></td>
-    <td><p>Provide Power to Motors</p></td>
+    <td><p>AWS IoT Ecosystem</p></td>
+    <td><p>Email notification service connected to the Launchpad and a user email via AWS.</p></td>
+    <td><p>Free</p></td>
+    <td><p>aws.com</p></td>
   </tr>
   <tr>
     <td colspan="3">
       <p>TOTAL PARTS</p></td>
-    <td><p>25</p></td>
+    <td><p>11</p></td>
     <td colspan="2">
       <p>TOTAL</p></td>
-    <td><p>$262.37</p></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td colspan="3">
-      <p>TOTAL PARTS (Excluding Provided)</p></td>
-    <td><p>14</p></td>
-    <td colspan="2">
-      <p>TOTAL (Exluding Provided)</p></td>
-    <td><p>$36.12</p></td>
+    <td><p>$167.00</p></td>
     <td></td>
   </tr>
 </tbody>
 </table>
+
+# References
+<a href="https://ucd-eec172.github.io/labs/lab4.html">https://ucd-eec172.github.io/labs/lab4.html</a>
