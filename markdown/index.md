@@ -80,19 +80,19 @@ Two CC3200 boards will be used to implement an user-observer system. The user sy
 ## Board 1
 
 <ol>
-  <li>**Crash Detection** 
+  <li><strong>Crash Detection</strong>
   
   The board communicates with the on-board accelerometer via an internal I2C line on Pin 1 and 2. The board reads 3 values from 3 addresses on the I2C corresponding to the x,y,z acceleration data. The board then calculates the sum of the directional-magnitudes squared to get a representative value of the overall magnitude. This value is then compared against a preset value to determine whether or not a crash happened. </li>
 
-  <li>**Send Post** 
+  <li><strong>Send Post</strong> 
   
   The board posts the crashed message to AWS IOT using SimpleLink protocols. The function was written in lab 3 and was modified to be able to post any arbitrary string. The modifications use string concatenation to generate any message that the user wants.  </li>
 
-  <li>**Wait for Decision** 
+  <li><strong>Wait for Decision</strong> 
   
   The board gets the AWS IOT shadow every 800 ms using the get function written in lab 3. The input is then searched through to find whether or not the crash message was acknowledged or ignored. The program then automatically advances to the user acknowledge state. </li>
 
-  <li>**User Acknowledge** 
+  <li><strong>User Acknowledge</strong>
   
   The board in the user acknowledge state polls the input on SW3. When the switch is pressed, the board acknowledges the result and resets the AWS shadow to the default state and returns to polling for a crash. </li>
 </ol>
@@ -100,15 +100,15 @@ Two CC3200 boards will be used to implement an user-observer system. The user sy
 ## Board 2
 
 <ol>
-  <li>**Crash Detection State** 
+  <li><strong>Crash Detection State</strong>
   
   The board gets the AWS IOT shadow every 800 ms using the get function written in lab 3. The input is then searched through to find whether or not the crash message was received. Once the message is found, the program then automatically advances to the user decision select state.  </li>
 
-  <li>**Decision Select State** 
+  <li><strong>Decision Select State</strong>
   
   The board writes a crash image to the OLED and ask the user to either acknowledge the crash or ignore the crash. The board then begins to poll the IR sensor for IR signals from the remote. This code was written in lab 3 and remains largely the same. Our implementation requires only 3 buttons: 1 for acknowledge, 2 for ignore, 3 for send. Thus, the other cases are ignored.  </li>
 
-  <li>**Post Decision** 
+  <li><strong>Post Decision</strong>
   
   The board writes the decision to the AWS IOT shadow, using the same logic from the Sent Post State on board one, except the posted message contains the decision. The program is then returned to polling for another crashed message. </li>
 </ol>
@@ -239,13 +239,10 @@ Note that all of these materials were provided in the lab.
     <td><p>aws.com</p></td>
   </tr>
   <tr>
-    <td colspan="3">
-      <p>TOTAL PARTS</p></td>
+    <td><p>TOTAL PARTS</p></td>
     <td><p>11</p></td>
-    <td colspan="2">
-      <p>TOTAL</p></td>
-    <td><p>$167.00</p></td>
-    <td></td>
+    <td colspan="2"><p>TOTAL</p></td>
+    <td colspan="2"><p>$167.00</p></td>
   </tr>
 </tbody>
 </table>
