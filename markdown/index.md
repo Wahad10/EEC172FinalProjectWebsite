@@ -248,4 +248,4 @@ Note that all of these materials were provided in the lab.
 </table>
 
 # References
-<a href="https://ucd-eec172.github.io/labs/lab4.html">https://ucd-eec172.github.io/labs/lab4.html</a>
+<a href="https://ucd-eec172.github.io/labs/project.html">https://ucd-eec172.github.io/labs/project.html</a>
